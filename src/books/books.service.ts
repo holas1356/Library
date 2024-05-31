@@ -1,26 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { Book } from './entities/book.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Author } from 'src/authors/entities/author.entity';
+
 
 @Injectable()
 export class BooksService {
-  create(createBookDto: CreateBookDto) {
-    return 'This action adds a new book';
+  constructor(
+    @InjectRepository(Book) private readonly bookRepository: Repository<Book>,
+    @InjectRepository(Author) private readonly authorRepository: Repository<Author>,
+  ) { }
+  async create(createBookDto: CreateBookDto) {
+    const existingBook = await this.bookRepository.findOneBy({ title: createBookDto.title });
+    if (existingBook) {
+      throw new BadRequestException('the book already exists');
+    }
+    const author = await this.authorRepository.findOneBy({ id: createBookDto.authorId });
+    if (!author) {
+      throw new NotFoundException('Author not found');
+    }
+    const book = this.bookRepository.create({
+      ...createBookDto,
+      author,
+    });
+    return await this.bookRepository.save(book);
+
   }
 
-  findAll() {
-    return `This action returns all books`;
+  async findAll() {
+    return await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.author', 'author') 
+      .getMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} book`;
+  async findOne(id: number) {
+    const book = await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.author', 'author')
+      .where('book.id = :id', { id })
+      .getOne();
+
+    if (!book) {
+      throw new NotFoundException('Book not found');
+    }
+
+    return book;
   }
 
-  update(id: number, updateBookDto: UpdateBookDto) {
-    return `This action updates a #${id} book`;
+  async update(id: number, updateBookDto: UpdateBookDto) {
+    const { authorId, title, description, price } = updateBookDto;
+    const existingBook = await this.bookRepository.findOneBy({id});
+    if (!existingBook) {
+      throw new NotFoundException('Book not found');
+    }
+    const author = await this.authorRepository.findOne({where: {id: authorId}});
+    if(!author){
+      throw new NotFoundException('Author not found');
+    }
+    existingBook.author = author;
+    existingBook.title = title;
+    existingBook.description = description;
+    existingBook.price = price;
+
+    return await this.bookRepository.save(existingBook);
+   
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async remove(id: number) {
+    const bookToRemove = await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.author', 'author')
+      .where('book.id = :id', { id })
+      .getOne();
+    if (!bookToRemove) {
+      throw new NotFoundException('Book not found');
+    }
+    await this.bookRepository.softDelete({ id });
+    return bookToRemove;
   }
 }
