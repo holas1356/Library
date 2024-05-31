@@ -1,9 +1,9 @@
 import { Book } from "src/books/entities/book.entity";
-import { Column, Entity,  ManyToOne,  OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, DeleteDateColumn, Entity,  ManyToOne,  OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Author {
-    @PrimaryGeneratedColumn()
+    @Column({ primary: true, generated: true })
     id: number;
   
     @Column()
@@ -14,5 +14,8 @@ export class Author {
   
    @OneToMany(() => Book, books=> books.author)
     books: Book[];
+
+    @DeleteDateColumn()
+    deletedAt: Date;
    
 }
