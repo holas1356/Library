@@ -52,38 +52,34 @@ export class BooksService {
   }
 
   async update(id: number, updateBookDto: UpdateBookDto) {
-    const existingBook = await this.bookRepository.findOneBy({ id });
+    const { authorId, title, description, price } = updateBookDto;
+    const existingBook = await this.bookRepository.findOneBy({id});
     if (!existingBook) {
       throw new NotFoundException('Book not found');
     }
-    if ('authorId' in updateBookDto) {
-      const authorId = updateBookDto.authorId;
-      const author = await this.authorRepository.findOne({ where: { id: authorId }, relations: ['books'] }); 
-    if (!author) {
+    const author = await this.authorRepository.findOne({where: {id: authorId}});
+    if(!author){
       throw new NotFoundException('Author not found');
     }
     existingBook.author = author;
-    }
-    if (updateBookDto.title) {
-      existingBook.title = updateBookDto.title;
-    }
-    if (updateBookDto.description) {
-      existingBook.description = updateBookDto.description;
-    }
-    if (updateBookDto.price) {
-      existingBook.price = updateBookDto.price;
-    }
-  
-    await this.bookRepository.save(existingBook);
-    
-    const updatedBook = await this.bookRepository.findOne({ where: { id }, relations: ['author'] });
-    if (!updatedBook) {
-      throw new NotFoundException('Could not find updated book');
-    }
-    return updatedBook;
+    existingBook.title = title;
+    existingBook.description = description;
+    existingBook.price = price;
+
+    return await this.bookRepository.save(existingBook);
+   
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async remove(id: number) {
+    const bookToRemove = await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.author', 'author')
+      .where('book.id = :id', { id })
+      .getOne();
+    if (!bookToRemove) {
+      throw new NotFoundException('Book not found');
+    }
+    await this.bookRepository.softDelete({ id });
+    return bookToRemove;
   }
 }

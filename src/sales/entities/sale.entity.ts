@@ -1,6 +1,6 @@
 import { Book } from "src/books/entities/book.entity";
 import { Client } from "src/clients/entities/client.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Sale {
@@ -10,15 +10,20 @@ export class Sale {
     @Column()
     quantity: number;
   
-    @Column()
+    @Column('decimal', { precision: 10, scale: 2 })
     totalPrice: number;
   
-    @Column()
+    @CreateDateColumn()
     date: Date;
   
     @ManyToOne(() => Book, book => book.sales)
+    @JoinColumn({ name: 'bookId' }) 
     book: Book; 
 
     @ManyToOne(() => Client, client => client.sales)
+    @JoinColumn({ name: 'clientId' }) 
     client: Client;
+
+    @DeleteDateColumn()
+    deletedAt: Date;
 }
