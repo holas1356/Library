@@ -4,6 +4,7 @@ import { UpdateAuthorDto } from './dto/update-author.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './entities/author.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from 'src/pagination.dto';
 
 @Injectable()
 export class AuthorsService {
@@ -21,9 +22,16 @@ export class AuthorsService {
     return await this.authorRepository.save(author);
   }
 
-  async findAll() {
-      return await this.authorRepository.find();
+  async findAll(pagination: PaginationDto) {
+    const { page, pageSize } = pagination;
+    const skip = (page - 1) * pageSize;
+    return this.authorRepository.find({
+      skip,
+      take: pageSize,
+    });
   }
+
+  
 
   async findOne(id: number) {
     const author = await this.authorRepository.findOneBy({ id });

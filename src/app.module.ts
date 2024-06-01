@@ -10,6 +10,9 @@ import { Sale } from './sales/entities/sale.entity';
 import { ClientsModule } from './clients/clients.module';
 import { Client } from './clients/entities/client.entity';
 
+
+
+
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -32,8 +35,10 @@ import { Client } from './clients/entities/client.entity';
   BooksModule, 
   AuthorsModule, 
   SalesModule, 
-  ClientsModule],
+  ClientsModule, ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  
+}

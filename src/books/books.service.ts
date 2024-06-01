@@ -5,6 +5,7 @@ import { Book } from './entities/book.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Author } from 'src/authors/entities/author.entity';
+import { PaginationDto } from 'src/pagination.dto';
 
 
 @Injectable()
@@ -29,6 +30,8 @@ export class BooksService {
     return await this.bookRepository.save(book);
 
   }
+
+
 
   async findAll() {
     return await this.bookRepository
